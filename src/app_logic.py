@@ -1,0 +1,79 @@
+import ipywidgets as widgets
+from IPython.display import display, HTML, clear_output
+from src.data_loader import AtlasDataLoader
+from src.templates import template_architectural_explorer
+
+class AtlasApp:
+    def __init__(self, data_path):
+        self.data_loader = AtlasDataLoader(data_path)
+        self.records = self.data_loader.records
+        self._setup_widgets()
+
+    def _setup_widgets(self):
+        # القوائم المنسدلة
+        self.drop_template = widgets.Dropdown(
+            options={'المشرح المعماري (Architectural Explorer)': template_architectural_explorer},
+            description='القالب:', style={'description_width': 'initial'})
+        
+        self.drop_dim = widgets.Dropdown(
+            options=self.data_loader.dimensions_list, 
+            description='البعد المستدام:', style={'description_width': 'initial'})
+            
+        self.drop_tag = widgets.Dropdown(
+            options=[], description='الوسم الدلالي:', style={'description_width': 'initial'})
+            
+        self.drop_hadith = widgets.Dropdown(
+            options=[], description='الحديث:', style={'description_width': 'initial'}, layout=widgets.Layout(width='300px'))
+            
+        self.output_area = widgets.Output()
+
+        # ربط الأحداث (Events)
+        self.drop_dim.observe(self.update_tags, 'value')
+        self.drop_tag.observe(self.update_hadiths, 'value')
+        self.drop_hadith.observe(self.render_view, 'value')
+        self.drop_template.observe(self.render_view, 'value')
+
+        # التهيئة الأولية
+        if self.data_loader.dimensions_list:
+            self.drop_dim.value = self.data_loader.dimensions_list[0]
+            self.update_tags(None)
+
+    def update_tags(self, change):
+        dim = self.drop_dim.value
+        tags = self.data_loader.tags_by_dimension.get(dim, [])
+        self.drop_tag.options = tags
+        if tags:
+            self.drop_tag.value = tags[0]
+            self.update_hadiths(None)
+
+    def update_hadiths(self, change):
+        tag = self.drop_tag.value
+        matched = []
+        for r in self.records:
+            for u in r.get('semantic_units', []):
+                if tag in u.get('semantic_core', {}).get('domain_tags', []):
+                    hid = r.get('hadith_core', {}).get('hadith_id', 'Unknown')
+                    # عرض رقم الحديث كخيار، وقيمة الخيار هي السجل نفسه
+                    matched.append((f"حديث رقم: {hid}", r))
+                    break
+        self.drop_hadith.options = matched
+        if matched:
+            self.drop_hadith.value = matched[0][1]
+            self.render_view(None)
+
+    def render_view(self, change):
+        with self.output_area:
+            clear_output(wait=True)
+            record = self.drop_hadith.value
+            template_func = self.drop_template.value
+            if record and template_func:
+                html_content = template_func(record)
+                display(HTML(html_content))
+
+    def run(self):
+        # تصميم شكل شريط الأدوات
+        header = HTML("<h2 style='text-align:right; color:#2c3e50; font-family:Tajawal;'>أطلس الاستدامة النبوي: لوحة التحكم التفاعلية</h2><hr>")
+        controls_row1 = widgets.HBox([self.drop_dim, self.drop_tag])
+        controls_row2 = widgets.HBox([self.drop_hadith, self.drop_template])
+        ui = widgets.VBox([header, controls_row1, controls_row2, self.output_area])
+        display(ui)
