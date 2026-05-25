@@ -69,3 +69,73 @@ def template_architectural_explorer(record):
 
 # يمكنك إضافة دوال جديدة هنا مستقبلاً
 # def template_rag_view(record): ...
+def template_sdg_policy_map(matched_units, selected_sdg):
+    """قالب العرض الثاني: خارطة السياسات المعاصرة وأهداف التنمية"""
+    
+    html = f"""
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap');
+        .policy-container {{ font-family: 'Tajawal', sans-serif; direction: rtl; text-align: right; background: #f4f6f9; padding: 20px; border-radius: 10px; max-width: 1000px; margin: auto; }}
+        .sdg-header {{ background: linear-gradient(135deg, #005A9C, #00A6E0); color: white; padding: 20px; border-radius: 8px; margin-bottom: 25px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);}}
+        .sdg-title {{ font-size: 24px; font-weight: bold; margin: 0; }}
+        .sdg-count {{ font-size: 14px; background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 20px; display: inline-block; margin-top: 10px; }}
+        
+        .policy-card {{ background: white; border-right: 6px solid #e67e22; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }}
+        
+        .contemporary-box {{ background: #fff3e0; padding: 15px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #ffe0b2; }}
+        .contemporary-title {{ color: #d35400; font-size: 14px; font-weight: bold; margin-bottom: 5px; }}
+        .contemporary-text {{ font-size: 18px; font-weight: bold; color: #333; }}
+        
+        .heritage-box {{ background: #e8f5e9; padding: 15px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #c8e6c9; }}
+        .heritage-title {{ color: #27ae60; font-size: 14px; font-weight: bold; margin-bottom: 5px; }}
+        .heritage-text {{ font-size: 17px; color: #2c3e50; font-family: Arial, sans-serif; }}
+        
+        .bridge-box {{ padding: 10px 15px; border-right: 4px solid #3498db; background: #ebf5fb; }}
+        .bridge-title {{ color: #2980b9; font-size: 13px; font-weight: bold; margin-bottom: 5px; }}
+        .bridge-text {{ font-size: 14px; color: #555; line-height: 1.6; }}
+    </style>
+
+    <div class="policy-container">
+        <div class="sdg-header">
+            <h1 class="sdg-title">الهدف التنموي: {selected_sdg}</h1>
+            <div class="sdg-count">تم العثور على ({len(matched_units)}) توجيه نبوي يدعم هذا الهدف</div>
+        </div>
+    """
+    
+    for item in matched_units:
+        hid = item['hadith_id']
+        u_id = item['unit']['semantic_unit_id']
+        u_text = item['unit']['semantic_core'].get('semantic_text', '')
+        
+        interp = item['unit'].get('unit_interpretive_layer', {})
+        expl = interp.get('operational_explanation', 'غير متوفر')
+        
+        apps = interp.get('contemporary_application', [])
+        app_text = apps[0].get('application_example', 'تطبيق عام يدعم الاستدامة') if apps else 'تطبيق عام يدعم الاستدامة'
+        
+        html += f"""
+        <div class="policy-card">
+            <div style="color: #95a5a6; font-size:12px; margin-bottom:10px;">مصدر السجل: {u_id} (من حديث {hid})</div>
+            
+            <div class="contemporary-box">
+                <div class="contemporary-title"><i class="fas fa-lightbulb"></i> التوصية والسياسة المعاصرة (Policy Recommendation):</div>
+                <div class="contemporary-text">{app_text}</div>
+            </div>
+            
+            <div class="heritage-box">
+                <div class="heritage-title"><i class="fas fa-book-open"></i> الدليل والمستند الشرعي (Prophetic Foundation):</div>
+                <div class="heritage-text">"{u_text}"</div>
+            </div>
+            
+            <div class="bridge-box">
+                <div class="bridge-title">التفسير الإجرائي للربط (Operational Bridge):</div>
+                <div class="bridge-text">{expl}</div>
+            </div>
+        </div>
+        """
+        
+    if not matched_units:
+        html += "<div style='text-align:center; padding: 30px; color:#7f8c8d;'>لا توجد توجيهات مسجلة تحت هذا الهدف في العينة الحالية.</div>"
+        
+    html += "</div>"
+    return html
