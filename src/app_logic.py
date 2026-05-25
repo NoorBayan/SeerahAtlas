@@ -126,3 +126,45 @@ class SDGPolicyApp:
         ui = widgets.VBox([header, self.drop_sdg, self.output_area])
         display(ui)
         self.render_view() # عرض النتيجة الأولى مباشرة
+
+from src.templates import template_maqasid_observatory
+
+class MaqasidApp:
+    def __init__(self, data_path):
+        self.data_loader = AtlasDataLoader(data_path)
+        self.records = self.data_loader.records
+        self._setup_widgets()
+
+    def _setup_widgets(self):
+        self.drop_maqsad = widgets.Dropdown(
+            options=self.data_loader.maqasid_list,
+            description='المقصد الشرعي:', 
+            style={'description_width': 'initial'},
+            layout=widgets.Layout(width='400px')
+        )
+        self.output_area = widgets.Output()
+
+        self.drop_maqsad.observe(self.render_view, 'value')
+
+    def render_view(self, change=None):
+        with self.output_area:
+            clear_output(wait=True)
+            selected_maqsad = self.drop_maqsad.value
+            
+            matched_units = []
+            for r in self.records:
+                hid = r.get('hadith_core', {}).get('hadith_id', 'Unknown')
+                for u in r.get('semantic_units', []):
+                    maqasid = u.get('semantic_core', {}).get('maqasid_alignment', [])
+                    if selected_maqsad in maqasid:
+                        matched_units.append({'hadith_id': hid, 'unit': u})
+            
+            if selected_maqsad:
+                html_content = template_maqasid_observatory(matched_units, selected_maqsad)
+                display(HTML(html_content))
+
+    def run(self):
+        header = widgets.HTML(value="<h2 style='text-align:right; color:#344955; font-family:Tahoma, sans-serif;'>المرصد المقاصدي للاستدامة (Maqasid Observatory)</h2><p style='text-align:right;'>اختر المقصد الشرعي (الضروريات الخمس وما يلحق بها) لاستعراض القواعد والمبادئ النبوية المندرجة تحته.</p><hr>")
+        ui = widgets.VBox([header, self.drop_maqsad, self.output_area])
+        display(ui)
+        self.render_view()
