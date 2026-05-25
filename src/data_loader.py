@@ -20,13 +20,13 @@ class AtlasDataLoader:
             print(f"Error loading data: {e}")
             return []
 
-    def _extract_filters(self):
+def _extract_filters(self):
         dimensions_set = set()
-        sdgs_set = set() # مصفوفة لجمع الـ SDGs
+        sdgs_set = set()
+        maqasid_set = set() # <-- مصفوفة جديدة لجمع المقاصد الشرعية
         
         for record in self.records:
             for unit in record.get('semantic_units', []):
-                # استخراج الأبعاد والوسوم
                 dims = unit['semantic_core'].get('sustainability_dimensions', [])
                 tags = unit['semantic_core'].get('domain_tags', [])
                 
@@ -34,6 +34,11 @@ class AtlasDataLoader:
                 sdgs = unit.get('unit_interpretive_layer', {}).get('global_sdg_mapping', {}).get('sdg_goal', [])
                 for sdg in sdgs:
                     sdgs_set.add(sdg)
+                    
+                # استخراج المقاصد الشرعية (Maqasid)
+                maqasid = unit['semantic_core'].get('maqasid_alignment', [])
+                for maq in maqasid:
+                    maqasid_set.add(maq)
                 
                 for dim in dims:
                     dimensions_set.add(dim)
@@ -44,7 +49,8 @@ class AtlasDataLoader:
                             self.tags_by_dimension[dim].add(tag)
                             
         self.dimensions_list = sorted(list(dimensions_set))
-        self.sdg_list = sorted(list(sdgs_set)) # ترتيب القائمة
+        self.sdg_list = sorted(list(sdgs_set))
+        self.maqasid_list = sorted(list(maqasid_set)) # <-- ترتيب قائمة المقاصد
         
         for dim in self.tags_by_dimension:
             self.tags_by_dimension[dim] = sorted(list(self.tags_by_dimension[dim]))
