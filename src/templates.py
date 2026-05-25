@@ -139,3 +139,107 @@ def template_sdg_policy_map(matched_units, selected_sdg):
         
     html += "</div>"
     return html
+
+
+def template_maqasid_observatory(matched_units, selected_maqsad):
+    """قالب العرض الثالث: المرصد المقاصدي للاستدامة"""
+    
+    # قاموس لترجمة المقاصد لتكون أجمل بصرياً (يمكنك إضافة المزيد لاحقاً)
+    maqasid_ar = {
+        "PRESERVATION_OF_WEALTH": "حفظ المال",
+        "PRESERVATION_OF_LIFE": "حفظ النفس",
+        "PRESERVATION_OF_LINEAGE": "حفظ النسل / الأسرة",
+        "PRESERVATION_OF_INTELLECT": "حفظ العقل",
+        "PRESERVATION_OF_RELIGION": "حفظ الدين",
+        "PUBLIC_WELFARE": "المصلحة العامة (الاستصلاح)"
+    }
+    
+    display_maqsad = maqasid_ar.get(selected_maqsad, selected_maqsad)
+    
+    html = f"""
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@400;700&display=swap');
+        .maqasid-container {{ font-family: 'Tajawal', sans-serif; direction: rtl; text-align: right; background: #faf9f6; padding: 20px; border-radius: 10px; max-width: 1000px; margin: auto; border: 1px solid #e0d8c3; }}
+        .maqasid-header {{ background: #4a6572; color: white; padding: 25px; border-radius: 8px; margin-bottom: 25px; text-align: center; border-bottom: 5px solid #f9aa33; }}
+        .maqasid-title {{ font-family: 'Amiri', serif; font-size: 32px; font-weight: bold; margin: 0; }}
+        .maqasid-subtitle {{ font-size: 15px; color: #e0e0e0; margin-top: 10px; }}
+        
+        .rule-card {{ background: white; border: 1px solid #dcdcdc; border-radius: 8px; padding: 0; margin-bottom: 25px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); overflow: hidden; }}
+        .rule-header {{ background: #344955; color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }}
+        .semantic-type {{ background: #f9aa33; color: #232f34; padding: 4px 12px; border-radius: 4px; font-weight: bold; font-size: 12px; letter-spacing: 1px; }}
+        
+        .rule-body {{ padding: 20px; }}
+        .hadith-text {{ font-family: 'Amiri', serif; font-size: 22px; color: #232f34; line-height: 1.8; text-align: center; margin-bottom: 20px; padding: 15px; background: #f4f6f8; border-radius: 5px; }}
+        
+        .impact-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }}
+        .impact-box {{ border: 1px solid #e0e0e0; border-radius: 5px; padding: 15px; }}
+        .impact-title {{ color: #4a6572; font-size: 14px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #f9aa33; padding-bottom: 5px; display: inline-block; }}
+        
+        .impact-tag {{ background: #e8eaed; color: #3c4043; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin-left: 5px; margin-bottom: 5px; display: inline-block; font-weight: bold; border: 1px solid #dadce0; }}
+        .impact-tag.scope {{ background: #e6f4ea; color: #137333; border-color: #ceead6; }}
+        .impact-tag.duration {{ background: #fce8e6; color: #c5221f; border-color: #fad2cf; }}
+        
+        .explanation-text {{ font-size: 15px; color: #5f6368; line-height: 1.6; border-right: 4px solid #4a6572; padding-right: 10px; }}
+    </style>
+
+    <div class="maqasid-container">
+        <div class="maqasid-header">
+            <h1 class="maqasid-title">مقصد: {display_maqsad}</h1>
+            <div class="maqasid-subtitle">تم استخراج ({len(matched_units)}) توجيه نبوي يخدم هذا المقصد الشرعي في إطار الاستدامة</div>
+        </div>
+    """
+    
+    for item in matched_units:
+        hid = item['hadith_id']
+        u_id = item['unit']['semantic_unit_id']
+        u_text = item['unit']['semantic_core'].get('semantic_text', '')
+        sem_type = item['unit']['semantic_core'].get('semantic_type', 'UNDEFINED')
+        
+        expl = item['unit'].get('unit_interpretive_layer', {}).get('operational_explanation', '')
+        
+        # استخراج نموذج التأثير (Impact Model)
+        impact = item['unit'].get('unit_analytical_layer', {}).get('impact_model', {})
+        intended = impact.get('intended_impact', [])
+        scope = impact.get('impact_scope', [])
+        duration = impact.get('impact_duration', [])
+        
+        intended_html = "".join([f"<span class='impact-tag'>{t}</span>" for t in intended])
+        scope_html = "".join([f"<span class='impact-tag scope'>{t}</span>" for t in scope])
+        duration_html = "".join([f"<span class='impact-tag duration'>{t}</span>" for t in duration])
+        
+        html += f"""
+        <div class="rule-card">
+            <div class="rule-header">
+                <span>معرف الوحدة: {u_id}</span>
+                <span class="semantic-type">نوع التوجيه: {sem_type}</span>
+            </div>
+            
+            <div class="rule-body">
+                <div class="hadith-text">"{u_text}"</div>
+                
+                <div class="impact-grid">
+                    <div class="impact-box">
+                        <div class="impact-title">مجال التأثير (Impact Domain)</div>
+                        <div>{intended_html if intended_html else '<span style="color:#999;font-size:12px;">غير محدد</span>'}</div>
+                    </div>
+                    
+                    <div class="impact-box">
+                        <div class="impact-title">الهيكل التحليلي (Analytical Scope)</div>
+                        <div>
+                            <div style="margin-bottom: 5px;"><span style="font-size:12px; color:#666;">النطاق: </span>{scope_html if scope_html else '-'}</div>
+                            <div><span style="font-size:12px; color:#666;">المدى: </span>{duration_html if duration_html else '-'}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="impact-title">التعليل المقاصدي (Maqasidic Justification)</div>
+                <div class="explanation-text">{expl}</div>
+            </div>
+        </div>
+        """
+        
+    if not matched_units:
+        html += "<div style='text-align:center; padding: 30px; color:#7f8c8d; font-family: Amiri, serif; font-size: 20px;'>لم يتم العثور على توجيهات مسجلة تحت هذا المقصد في العينة الحالية.</div>"
+        
+    html += "</div>"
+    return html
