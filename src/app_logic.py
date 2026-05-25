@@ -210,3 +210,113 @@ class ThematicAggregatorApp:
         ui = widgets.VBox([header, self.drop_keyword, self.output_area])
         display(ui)
         self.render_view()
+
+
+import plotly.graph_objects as go
+from collections import Counter
+# (تأكد من أن هذه الاستدعاءات موجودة في أعلى الملف)
+
+class StatisticalDashboardApp:
+    def __init__(self, data_path):
+        self.data_loader = AtlasDataLoader(data_path)
+        self.records = self.data_loader.records
+        self.output_area = widgets.Output()
+
+    def generate_kpis(self):
+        """حساب مؤشرات الأداء الرئيسية"""
+        total_hadiths = len(self.records)
+        total_asus = sum(len(r.get('semantic_units', [])) for r in self.records)
+        
+        # تصميم كروت المؤشرات (KPI Cards)
+        html = f"""
+        <div style="display: flex; justify-content: space-around; margin-bottom: 30px; direction: rtl;">
+            <div style="background: linear-gradient(135deg, #1abc9c, #16a085); color: white; padding: 20px; border-radius: 10px; width: 45%; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="font-size: 16px; font-family: 'Tajawal', sans-serif;">إجمالي الأحاديث النبوية (Records)</div>
+                <div style="font-size: 40px; font-weight: bold; margin-top: 10px;">{total_hadiths}</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #3498db, #2980b9); color: white; padding: 20px; border-radius: 10px; width: 45%; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="font-size: 16px; font-family: 'Tajawal', sans-serif;">إجمالي الوحدات الذرية المستخلصة (ASUs)</div>
+                <div style="font-size: 40px; font-weight: bold; margin-top: 10px;">{total_asus}</div>
+            </div>
+        </div>
+        """
+        return widgets.HTML(value=html)
+
+    def generate_pie_chart(self):
+        """توليد المخطط الدائري لأبعاد الاستدامة"""
+        dims_counter = Counter()
+        for r in self.records:
+            for u in r.get('semantic_units', []):
+                dims = u.get('semantic_core', {}).get('sustainability_dimensions', [])
+                for d in dims:
+                    dims_counter[d] += 1
+                    
+        labels = list(dims_counter.keys())
+        values = list(dims_counter.values())
+        
+        # ترجمة الأبعاد لتكون أوضح
+        dim_names = {"ECO": "الاقتصاد", "SOC": "المجتمع", "ETH": "الأخلاق", "GOV": "الحوكمة/السياسة"}
+        display_labels = [dim_names.get(l, l) for l in labels]
+
+        fig = go.Figure(data=[go.Pie(labels=display_labels, values=values, hole=.4)])
+        fig.update_layout(
+            title_text="توزيع التوجيهات النبوية على أبعاد الاستدامة (Dimensions)",
+            title_x=0.5,
+            font=dict(family="Tahoma", size=14)
+        )
+        return fig
+
+    def generate_bar_chart(self):
+        """توليد المخطط الشريطي لأهداف التنمية (SDGs)"""
+        sdgs_counter = Counter()
+        for r in self.records:
+            for u in r.get('semantic_units', []):
+                sdgs = u.get('unit_interpretive_layer', {}).get('global_sdg_mapping', {}).get('sdg_goal', [])
+                for s in sdgs:
+                    sdgs_counter[s] += 1
+                    
+        # ترتيب الأهداف تنازلياً حسب التغطية
+        sorted_sdgs = sdgs_counter.most_common(10) # نأخذ أعلى 10 أهداف لتوضيح الرسم
+        
+        if not sorted_sdgs:
+            return None # إذا كانت البيانات فارغة
+
+        labels = [item[0].replace("SDG_", "").replace("_", " ") for item in sorted_sdgs]
+        values = [item[1] for item in sorted_sdgs]
+
+        fig = go.Figure(data=[go.Bar(x=labels, y=values, marker_color='#e67e22')])
+        fig.update_layout(
+            title_text="أكثر أهداف التنمية المستدامة (SDGs) تغطيةً في السنة النبوية",
+            title_x=0.5,
+            xaxis_title="هدف التنمية المستدامة",
+            yaxis_title="عدد التوجيهات النبوية (ASUs)",
+            font=dict(family="Tahoma", size=14)
+        )
+        return fig
+
+    def render_view(self, change=None):
+        with self.output_area:
+            clear_output(wait=True)
+            
+            # عرض مؤشرات الأداء (KPIs)
+            display(self.generate_kpis())
+            
+            # عرض المخطط الدائري
+            pie_fig = self.generate_pie_chart()
+            if pie_fig:
+                pie_fig.show()
+                
+            # عرض المخطط الشريطي
+            bar_fig = self.generate_bar_chart()
+            if bar_fig:
+                bar_fig.show()
+
+    def run(self):
+        header = widgets.HTML(value="<h2 style='text-align:right; color:#8e44ad; font-family:Tahoma, sans-serif;'>لوحة القيادة الإحصائية (Statistical Dashboard)</h2><p style='text-align:right;'>نظرة بانورامية تحلّل توزيع التوجيهات النبوية على أبعاد الاستدامة وأهداف الأمم المتحدة.</p><hr>")
+        
+        btn_refresh = widgets.Button(description="تحديث الإحصائيات", button_style='primary', icon='refresh')
+        btn_refresh.on_click(self.render_view)
+        
+        ui = widgets.VBox([header, btn_refresh, self.output_area])
+        display(ui)
+        self.render_view()
