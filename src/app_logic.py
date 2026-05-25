@@ -79,3 +79,50 @@ class AtlasApp:
         
         ui = widgets.VBox([header, controls_row1, controls_row2, self.output_area])
         display(ui)
+
+
+from src.templates import template_sdg_policy_map
+
+class SDGPolicyApp:
+    def __init__(self, data_path):
+        self.data_loader = AtlasDataLoader(data_path)
+        self.records = self.data_loader.records
+        self._setup_widgets()
+
+    def _setup_widgets(self):
+        # القائمة المنسدلة الوحيدة هنا هي الخاصة بأهداف الأمم المتحدة
+        self.drop_sdg = widgets.Dropdown(
+            options=self.data_loader.sdg_list,
+            description='الهدف التنموي (SDG):', 
+            style={'description_width': 'initial'},
+            layout=widgets.Layout(width='400px')
+        )
+        self.output_area = widgets.Output()
+
+        # المراقبة
+        self.drop_sdg.observe(self.render_view, 'value')
+
+    def render_view(self, change=None):
+        with self.output_area:
+            clear_output(wait=True)
+            selected_sdg = self.drop_sdg.value
+            
+            # البحث عن كل الوحدات (ASUs) التي تحتوي على هذا الهدف
+            matched_units = []
+            for r in self.records:
+                hid = r.get('hadith_core', {}).get('hadith_id', 'Unknown')
+                for u in r.get('semantic_units', []):
+                    sdgs = u.get('unit_interpretive_layer', {}).get('global_sdg_mapping', {}).get('sdg_goal', [])
+                    if selected_sdg in sdgs:
+                        matched_units.append({'hadith_id': hid, 'unit': u})
+            
+            # إرسال البيانات للقالب الجديد
+            if selected_sdg:
+                html_content = template_sdg_policy_map(matched_units, selected_sdg)
+                display(HTML(html_content))
+
+    def run(self):
+        header = widgets.HTML(value="<h2 style='text-align:right; color:#d35400; font-family:Tahoma, sans-serif;'>خارطة السياسات المعاصرة (SDG & Policy Map)</h2><p style='text-align:right;'>اختر هدف التنمية المستدامة لاستعراض السياسات الحديثة المدعومة بالتوجيهات النبوية.</p><hr>")
+        ui = widgets.VBox([header, self.drop_sdg, self.output_area])
+        display(ui)
+        self.render_view() # عرض النتيجة الأولى مباشرة
