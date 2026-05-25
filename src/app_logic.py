@@ -71,9 +71,11 @@ class AtlasApp:
                 display(HTML(html_content))
 
     def run(self):
-        # تصميم شكل شريط الأدوات
-        header = HTML("<h2 style='text-align:right; color:#2c3e50; font-family:Tajawal;'>أطلس الاستدامة النبوي: لوحة التحكم التفاعلية</h2><hr>")
+        # التعديل هنا: استخدام widgets.HTML بدلاً من HTML
+        header = widgets.HTML(value="<h2 style='text-align:right; color:#2c3e50; font-family:Tahoma, sans-serif;'>أطلس الاستدامة النبوي: لوحة التحكم التفاعلية</h2><hr>")
+        
         controls_row1 = widgets.HBox([self.drop_dim, self.drop_tag])
         controls_row2 = widgets.HBox([self.drop_hadith, self.drop_template])
+        
         ui = widgets.VBox([header, controls_row1, controls_row2, self.output_area])
         display(ui)
