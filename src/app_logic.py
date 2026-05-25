@@ -168,3 +168,45 @@ class MaqasidApp:
         ui = widgets.VBox([header, self.drop_maqsad, self.output_area])
         display(ui)
         self.render_view()
+
+
+from src.templates import template_thematic_aggregator
+
+class ThematicAggregatorApp:
+    def __init__(self, data_path):
+        self.data_loader = AtlasDataLoader(data_path)
+        self.records = self.data_loader.records
+        self._setup_widgets()
+
+    def _setup_widgets(self):
+        self.drop_keyword = widgets.Dropdown(
+            options=self.data_loader.keywords_list,
+            description='الكلمة المفتاحية:', 
+            style={'description_width': 'initial'},
+            layout=widgets.Layout(width='400px')
+        )
+        self.output_area = widgets.Output()
+        self.drop_keyword.observe(self.render_view, 'value')
+
+    def render_view(self, change=None):
+        with self.output_area:
+            clear_output(wait=True)
+            selected_keyword = self.drop_keyword.value
+            
+            matched_units = []
+            for r in self.records:
+                hid = r.get('hadith_core', {}).get('hadith_id', 'Unknown')
+                for u in r.get('semantic_units', []):
+                    keywords = u.get('semantic_core', {}).get('keywords', [])
+                    if selected_keyword in keywords:
+                        matched_units.append({'hadith_id': hid, 'unit': u})
+            
+            if selected_keyword:
+                html_content = template_thematic_aggregator(matched_units, selected_keyword)
+                display(HTML(html_content))
+
+    def run(self):
+        header = widgets.HTML(value="<h2 style='text-align:right; color:#16a085; font-family:Tahoma, sans-serif;'>المجمع الموضوعي للتوجيهات (Thematic Aggregator)</h2><p style='text-align:right;'>اختر كلمة مفتاحية لاستعراض كافة التوجيهات النبوية المرتبطة بها في سياق سردي متصل لبناء فقه موضوعي.</p><hr>")
+        ui = widgets.VBox([header, self.drop_keyword, self.output_area])
+        display(ui)
+        self.render_view()
