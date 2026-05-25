@@ -243,3 +243,70 @@ def template_maqasid_observatory(matched_units, selected_maqsad):
         
     html += "</div>"
     return html
+
+def template_thematic_aggregator(matched_units, selected_keyword):
+    """قالب العرض الرابع: المجمع الموضوعي للتوجيهات"""
+    
+    html = f"""
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&family=Readex+Pro:wght@400;600&display=swap');
+        .thematic-container {{ font-family: 'Tajawal', sans-serif; direction: rtl; text-align: right; background: #ffffff; padding: 30px; border-radius: 12px; max-width: 900px; margin: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.08); border-top: 6px solid #16a085; }}
+        
+        .thematic-header {{ text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px dashed #ecf0f1; }}
+        .thematic-title {{ font-family: 'Readex Pro', sans-serif; font-size: 28px; color: #2c3e50; font-weight: 600; margin-bottom: 10px; }}
+        .thematic-counter {{ background: #e8f8f5; color: #16a085; padding: 8px 20px; border-radius: 30px; font-size: 16px; font-weight: bold; display: inline-block; border: 1px solid #1abc9c; }}
+        
+        .timeline {{ position: relative; padding: 20px 0; margin-right: 20px; }}
+        .timeline::before {{ content: ''; position: absolute; top: 0; bottom: 0; right: 0; width: 4px; background: #16a085; border-radius: 2px; }}
+        
+        .timeline-item {{ position: relative; margin-bottom: 25px; padding-right: 30px; }}
+        .timeline-item::before {{ content: ''; position: absolute; right: -8px; top: 5px; width: 20px; height: 20px; background: white; border: 4px solid #16a085; border-radius: 50%; box-shadow: 0 0 0 4px rgba(22, 160, 133, 0.2); }}
+        
+        .directive-box {{ background: #fdfefe; border: 1px solid #eaeded; border-radius: 8px; padding: 20px; transition: all 0.3s ease; }}
+        .directive-box:hover {{ box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-color: #1abc9c; transform: translateX(-5px); }}
+        
+        .directive-text {{ font-size: 19px; color: #2c3e50; line-height: 1.7; font-weight: bold; margin-bottom: 10px; }}
+        
+        .meta-footer {{ display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 10px; border-top: 1px solid #f2f4f4; font-size: 13px; color: #7f8c8d; }}
+        .source-id {{ background: #f2f3f4; padding: 3px 8px; border-radius: 4px; font-family: monospace; }}
+    </style>
+
+    <div class="thematic-container">
+        <div class="thematic-header">
+            <h1 class="thematic-title">الموضوع: {selected_keyword}</h1>
+            <div class="thematic-counter">تم استنباط ({len(matched_units)}) توجيه نبوي يشكل نظرية متكاملة في هذا الباب</div>
+        </div>
+        
+        <div class="timeline">
+    """
+    
+    for item in matched_units:
+        u_id = item['unit']['semantic_unit_id']
+        u_text = item['unit']['semantic_core'].get('semantic_text', '')
+        score = item['unit'].get('unit_analytical_layer', {}).get('unit_sustainability_score', 'N/A')
+        
+        html += f"""
+            <div class="timeline-item">
+                <div class="directive-box">
+                    <div class="directive-text">{u_text}</div>
+                    <div class="meta-footer">
+                        <div>درجة الاستدامة (Score): <strong style="color:#27ae60;">{score}</strong></div>
+                        <div class="source-id">المصدر: {u_id}</div>
+                    </div>
+                </div>
+            </div>
+        """
+        
+    if not matched_units:
+        html += """
+            <div style='text-align:center; padding: 40px; color:#95a5a6; font-size: 18px;'>
+                <i class="fas fa-search" style="font-size: 40px; margin-bottom: 15px; color:#bdc3c7;"></i><br>
+                لم يتم العثور على توجيهات لهذا الموضوع في العينة الحالية.
+            </div>
+        """
+        
+    html += """
+        </div>
+    </div>
+    """
+    return html
