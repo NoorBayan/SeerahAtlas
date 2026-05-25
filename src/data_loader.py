@@ -2,6 +2,7 @@ import json
 
 class AtlasDataLoader:
     def __init__(self, filepath):
+        self.maqasid_list = []
         self.filepath = filepath
         self.records = self._load_data()
         self.dimensions_list = []
