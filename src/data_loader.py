@@ -1,23 +1,39 @@
 import json
+import zipfile
+import os
 
 class AtlasDataLoader:
     def __init__(self, filepath):
-        self.maqasid_list = []
-        self.keywords_list = []
         self.filepath = filepath
         self.records = self._load_data()
         self.dimensions_list = []
         self.tags_by_dimension = {}
-        self.sdg_list = [] # قائمة جديدة لأهداف التنمية
+        self.sdg_list = []
+        self.maqasid_list = []
+        self.keywords_list = []
         self._extract_filters()
 
     def _load_data(self):
         try:
-            with open(self.filepath, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                if isinstance(data, dict):
-                    return list(data.values())[0] if data.values() else []
-                return data
+            # التحقق مما إذا كان الملف الممرر هو ملف مضغوط ZIP
+            if self.filepath.endswith('.zip'):
+                # فتح ملف الـ ZIP في الذاكرة (دون الحاجة لاستخراج الملف فعلياً على الهارد)
+                with zipfile.ZipFile(self.filepath, 'r') as z:
+                    # نفترض أن ملف الـ JSON داخل الـ ZIP يحمل نفس اسم الملف ولكن بصيغة json
+                    json_filename = os.path.basename(self.filepath).replace('.zip', '.json')
+                    
+                    # قراءة محتوى الـ JSON من داخل الـ ZIP
+                    with z.open(json_filename) as f:
+                        data = json.load(f)
+            else:
+                # إذا كان ملف JSON عادي (في حال قررت استخدامه محلياً)
+                with open(self.filepath, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    
+            if isinstance(data, dict):
+                return list(data.values())[0] if data.values() else []
+            return data
+            
         except Exception as e:
             print(f"Error loading data: {e}")
             return []
