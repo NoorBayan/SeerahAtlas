@@ -107,29 +107,6 @@ The entire analytical workflow is documented in Jupyter Notebooks located in the
 
 ---
 
-## 📁 Project Structure
-
-```
-prophetic-sustainability-atlas/
-├── data/
-│   └── prophetic_sustainability_corpus.csv   # The core annotated dataset
-│
-├── notebooks/
-│   ├── 1_Corpus_Exploration.ipynb
-│   ├── 2_Topic_Modeling.ipynb
-│   └── 3_Concept_Network_Analysis.ipynb
-│
-├── visualizations/
-│   ├── atlas_webapp/                         # Source code for the interactive web atlas
-│   └── static_plots/                         # Saved charts and graphs from the notebooks
-│
-├── .gitignore
-├── LICENSE
-└── README.md
-```
-
----
-
 ## 🔬 Key Findings & Visualizations
 
 Our analysis has produced several innovative visualizations that form the core of the Atlas:
